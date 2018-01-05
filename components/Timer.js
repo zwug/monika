@@ -1,33 +1,55 @@
 import React from 'react';
-import { Text, View, Animated, StyleSheet, Easing, Button } from 'react-native';
+import { Text, View, Animated, StyleSheet, Easing, TouchableOpacity } from 'react-native';
 import { Audio } from 'expo';
 
 const size = 200;
 const borderWidth = 16;
+const yellow = '#ffff00';
 
 const styles = StyleSheet.create({
-  circle: {
-    borderColor: '#ffff00',
-    borderRadius: size / 2,
-    borderWidth,
+  circleContainer: {
     height: size,
     position: 'relative',
     width: size,
+    alignItems: 'center',
+  },
+  circle: {
+    borderColor: yellow,
+    borderRadius: size / 2,
+    borderWidth,
+    height: size,
+    position: 'absolute',
+    width: size,
+    top: 0,
+    left: 0,
   },
   cover: {
     borderColor: '#212121',
-    borderBottomWidth: (size / 2),
-    bottom: -borderWidth,
-    left: -2 * borderWidth,
-    height: size,
+    borderBottomWidth: (size / 2) + 15,
+    bottom: -15,
+    left: -15,
+    right: -15,
+    height: size + 30,
     position: 'absolute',
     width: size + (2 * borderWidth),
   },
-  button: {
-    position: 'absolute',
-    bottom: 20,
-    left: (size / 2) - 50,
+  startButton: {
+    backgroundColor: yellow,
+    borderRadius: 4,
+    padding: 20,
     zIndex: 2,
+    marginTop: 30,
+  },
+  stopButton: {
+    backgroundColor: '#ff0000',
+    borderRadius: 4,
+    padding: 10,
+    zIndex: 2,
+    marginTop: 30,
+  },
+  buttonText: {
+    color: '#000',
+    fontSize: 24,
   },
   duration: {
     alignItems: 'center',
@@ -66,6 +88,10 @@ export default class Timer extends React.Component {
       return;
     }
 
+    this.setTime(duration);
+  }
+
+  setTime = (duration) => {
     Animated.timing(
       this.state.rotateAnim,
       {
@@ -87,6 +113,7 @@ export default class Timer extends React.Component {
     });
 
     if (secondsLeft == 0) {
+      console.log('playAsync');
       return this.sound.playAsync()
       .then(() => {
         return this.sound.setPositionAsync(0);
@@ -124,6 +151,25 @@ export default class Timer extends React.Component {
     });
   }
 
+  onResetPress = () => {
+    this.setTime(this.props.duration);
+  }
+
+  renderControls() {
+    if (this.state.isRunning) {
+      return (
+        <TouchableOpacity style={styles.stopButton} onPress={this.onResetPress}>
+          <Text style={styles.buttonText}>Сброс</Text>
+        </TouchableOpacity>
+      );
+    }
+    return (
+      <TouchableOpacity style={styles.startButton} onPress={this.onStartPress}>
+        <Text style={styles.buttonText}>Начать</Text>
+      </TouchableOpacity>
+    );
+  }
+
   render() {
     const spin = this.state.rotateAnim.interpolate({
       inputRange: [0, 1],
@@ -131,15 +177,12 @@ export default class Timer extends React.Component {
     });
 
     return (
-      <View style={styles.circle}>
+      <View style={styles.circleContainer}>
+        <View style={styles.circle} />
         <View style={styles.duration}>
           <Text style={styles.durationText}>{this.state.secondsLeft.toFixed(1)}</Text>
         </View>
-        {!this.state.isRunning &&
-          <View style={styles.button}>
-            <Button onPress={this.onStartPress} title={'Начать'} />
-          </View>
-        }
+        {this.renderControls()}
         <Animated.View style={styles.cover} />
         <Animated.View style={[styles.cover, { transform: [{ rotate: spin }] }]} />
       </View>

@@ -21,8 +21,28 @@ const styles = StyleSheet.create({
 });
 
 export default class Welcome extends React.Component {
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      activeRoundIndex: 0,
+    }
+  }
+
   onRoundPress(roundIndex) {
     this.props.onRoundDurationChange(roundSeconds[roundIndex]);
+    this.setState({
+      activeRoundIndex: roundIndex,
+    });
+  }
+
+  getItemStyle(roundIndex) {
+    return [
+      styles.text,
+      {
+        color: roundIndex === this.state.activeRoundIndex ? '#ffff00' : '#fffff2',
+      }
+    ]
   }
 
   render() {
@@ -34,7 +54,7 @@ export default class Welcome extends React.Component {
             style={styles.round}
             onPress={this.onRoundPress.bind(this, index)}
           >
-            <Text style={styles.text} >
+            <Text style={this.getItemStyle(index)} >
               {index + 1} раунд
             </Text>
           </TouchableHighlight>
