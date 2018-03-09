@@ -1,10 +1,13 @@
 import React from 'react';
-import { Text, View, Animated, StyleSheet, Easing, TouchableOpacity } from 'react-native';
-import { Audio } from 'expo';
+import { Text, View, Animated, StyleSheet, Easing, TouchableOpacity, Vibration } from 'react-native';
+import { Audio, KeepAwake, Camera, Permissions} from 'expo';
+
+import blink from '../utils/blink';
 
 const size = 200;
 const borderWidth = 16;
 const yellow = '#ffff00';
+const VIBRATION_DURATION = 1200; // ms
 
 const styles = StyleSheet.create({
   circleContainer: {
@@ -70,6 +73,8 @@ export default class Timer extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
+      hasCameraPermission: null,
+      isTorchLighting: false,
       isRunning: false,
       rotateAnim: new Animated.Value(0),
       secondsLeft: props.duration,
@@ -81,6 +86,11 @@ export default class Timer extends React.Component {
       this.sound = new Audio.Sound();
       return this.sound.loadAsync(require('./horn.mp3'));
     }).then(() => {console.log('loaded');})
+  }
+
+  async componentWillMount() {
+    const { status } = await Permissions.askAsync(Permissions.CAMERA);
+    this.setState({ hasCameraPermission: status === 'granted' });
   }
 
   componentWillReceiveProps({ duration }) {
@@ -106,6 +116,12 @@ export default class Timer extends React.Component {
     });
   }
 
+  toggleTorch = () => {
+    this.setState({
+      isTorchLighting: !this.state.isTorchLighting,
+    })
+  }
+
   onSecondsLeftUpdate = ({ value }) => {
     const secondsLeft = this.props.duration * (1 - value);
     this.setState({
@@ -113,15 +129,15 @@ export default class Timer extends React.Component {
     });
 
     if (secondsLeft == 0) {
-      console.log('playAsync');
-      return this.sound.playAsync()
-      .then(() => {
-        return this.sound.setPositionAsync(0);
-      });
+      this.sound.playAsync()
+        .then(() => this.sound.setPositionAsync(0));
+
+      Vibration.vibrate(VIBRATION_DURATION);
+      blink(6, 200, this.toggleTorch);
     }
   }
 
-  onTimeEnd = () => {
+  onAnimationEnd = () => {
     this.setState({
       isRunning: false,
       secondsLeft: this.props.duration,
@@ -144,7 +160,7 @@ export default class Timer extends React.Component {
         duration: this.props.duration * 1000,
         easing: Easing.linear,
       },
-    ).start(this.onTimeEnd);
+    ).start(this.onAnimationEnd);
 
     this.setState({
       isRunning: true,
@@ -176,8 +192,17 @@ export default class Timer extends React.Component {
       outputRange: ['0deg', '180deg'],
     });
 
+    const { hasCameraPermission, isTorchLighting } = this.state;
+    let cameraFlashMode = Camera.Constants.FlashMode.off;
+
+    if (hasCameraPermission && isTorchLighting) {
+      cameraFlashMode = Camera.Constants.FlashMode.torch;
+    }
+
     return (
       <View style={styles.circleContainer}>
+        {hasCameraPermission && <Camera flashMode={cameraFlashMode}/>}
+        <KeepAwake/>
         <View style={styles.circle} />
         <View style={styles.duration}>
           <Text style={styles.durationText}>{this.state.secondsLeft.toFixed(1)}</Text>
