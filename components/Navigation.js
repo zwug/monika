@@ -1,7 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, View, TouchableHighlight } from 'react-native';
 
-const roundSeconds = [30, 20, 3]; // seconds for each round
+const roundSeconds = [30, 20, 15]; // seconds for each round
 
 const styles = StyleSheet.create({
   container: {

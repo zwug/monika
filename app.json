@@ -1,6 +1,10 @@
 {
   "expo": {
+    "name": "monika",
+    "icon": "./monika_icon.png",
     "sdkVersion": "23.0.0",
+    "slug": "monika",
+    "version": "1.0.0",
     "android": {
       "package": "com.zwug.monika"
     }
